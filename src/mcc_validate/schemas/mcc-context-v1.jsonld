@@ -1,0 +1,134 @@
+{
+  "@context": {
+    "@version": 1.1,
+    "mcc": "https://mcc-standard.org/v1/",
+    "schema": "http://schema.org/",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "dcterms": "http://purl.org/dc/terms/",
+    "spdx": "http://spdx.org/rdf/terms#",
+    "snomed": "http://snomed.info/id/",
+    "fhir": "http://hl7.org/fhir/",
+
+    "ModelContextCertificate": "mcc:ModelContextCertificate",
+    "ComponentCertificateRef": "mcc:ComponentCertificateRef",
+    "CompositeSystem": "mcc:CompositeSystem",
+
+    "certificateId": {
+      "@id": "mcc:certificateId",
+      "@type": "xsd:string"
+    },
+    "version": {
+      "@id": "mcc:version",
+      "@type": "xsd:string"
+    },
+    "issued": {
+      "@id": "dcterms:issued",
+      "@type": "xsd:date"
+    },
+    "expires": {
+      "@id": "mcc:expires",
+      "@type": "xsd:date"
+    },
+    "riskTier": {
+      "@id": "mcc:riskTier",
+      "@type": "xsd:integer"
+    },
+    "status": {
+      "@id": "mcc:status",
+      "@type": "xsd:string"
+    },
+
+    "identity": "mcc:identity",
+    "architecture": "mcc:architecture",
+    "trainingData": "mcc:trainingData",
+    "evaluation": "mcc:evaluation",
+    "usageEnvelope": "mcc:usageEnvelope",
+    "runtime": "mcc:runtime",
+    "approvedChangeEnvelope": "mcc:approvedChangeEnvelope",
+    "composition": "mcc:composition",
+    "signature": "mcc:signature",
+
+    "certificateAuthority": "mcc:certificateAuthority",
+    "certificateHolder": "mcc:certificateHolder",
+    "modelName": "mcc:modelName",
+    "modelVersion": "mcc:modelVersion",
+    "weightHash": "mcc:weightHash",
+    "hashAlgorithm": "mcc:hashAlgorithm",
+    "parentCertificate": "mcc:parentCertificate",
+    "trainingInfrastructure": "mcc:trainingInfrastructure",
+
+    "legalName": "schema:legalName",
+    "registrationNumber": "mcc:registrationNumber",
+    "jurisdiction": "mcc:jurisdiction",
+    "contactEmail": "schema:email",
+
+    "modelType": "mcc:modelType",
+    "parameterCount": "mcc:parameterCount",
+    "precision": "mcc:precision",
+    "inputModalities": "mcc:inputModalities",
+    "outputModalities": "mcc:outputModalities",
+    "contextWindow": "mcc:contextWindow",
+    "vocabularySize": "mcc:vocabularySize",
+    "layerCount": "mcc:layerCount",
+    "attentionMechanism": "mcc:attentionMechanism",
+    "normalisationType": "mcc:normalisationType",
+    "activationFunction": "mcc:activationFunction",
+    "layers": "mcc:layers",
+    "fineTuning": "mcc:fineTuning",
+    "quantisation": "mcc:quantisation",
+    "foundationModelRef": "mcc:foundationModelRef",
+
+    "datasets": "mcc:datasets",
+    "datasetName": "mcc:datasetName",
+    "datasetVersion": "mcc:datasetVersion",
+    "dataCategory": "mcc:dataCategory",
+    "containsPatientData": "mcc:containsPatientData",
+    "dataController": "mcc:dataController",
+    "dataSharingAgreement": "mcc:dataSharingAgreement",
+    "licence": "spdx:licenseDeclared",
+    "recordCount": "mcc:recordCount",
+    "temporalCoverage": "dcterms:temporal",
+    "demographicDistribution": "mcc:demographicDistribution",
+    "preprocessingPipeline": "mcc:preprocessingPipeline",
+    "knownBiases": "mcc:knownBiases",
+    "biasmitigations": "mcc:biasMitigations",
+
+    "metrics": "mcc:metrics",
+    "benchmarks": "mcc:benchmarks",
+    "demographicStratification": "mcc:demographicStratification",
+    "failureModes": "mcc:failureModes",
+    "adversarialAssessment": "mcc:adversarialAssessment",
+    "confidenceCalibration": "mcc:confidenceCalibration",
+    "clinicalEvidence": "mcc:clinicalEvidence",
+    "independentEvaluator": "mcc:independentEvaluator",
+
+    "intendedPurpose": "mcc:intendedPurpose",
+    "snomedCodes": "mcc:snomedCodes",
+    "approvedPopulations": "mcc:approvedPopulations",
+    "excludedPopulations": "mcc:excludedPopulations",
+    "inputSpecifications": "mcc:inputSpecifications",
+    "outputSpecifications": "mcc:outputSpecifications",
+    "humanInTheLoop": "mcc:humanInTheLoop",
+    "excludedUses": "mcc:excludedUses",
+    "maximumDeploymentScale": "mcc:maximumDeploymentScale",
+
+    "infrastructureRequirements": "mcc:infrastructureRequirements",
+    "softwareDependencies": "mcc:softwareDependencies",
+    "guardrails": "mcc:guardrails",
+    "logging": "mcc:logging",
+    "driftDetection": "mcc:driftDetection",
+    "invalidationTriggers": "mcc:invalidationTriggers",
+    "incidentReporting": "mcc:incidentReporting",
+
+    "permittedChanges": "mcc:permittedChanges",
+    "changeType": "mcc:changeType",
+    "changeBounds": "mcc:changeBounds",
+    "validationRequired": "mcc:validationRequired",
+    "filingRequired": "mcc:filingRequired",
+
+    "components": "mcc:components",
+    "integrationArchitecture": "mcc:integrationArchitecture",
+    "dataFlow": "mcc:dataFlow",
+    "emergentProperties": "mcc:emergentProperties"
+  }
+}

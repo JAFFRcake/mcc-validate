@@ -1,0 +1,93 @@
+{
+  "@context": "https://mcc-standard.org/v1",
+  "@type": "ModelContextCertificate",
+  "certificateId": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+  "version": "1.0.0",
+  "issued": "2026-01-01",
+  "expires": "2027-01-01",
+  "riskTier": 3,
+  "status": "active",
+  "identity": {
+    "certificateAuthority": {
+      "legalName": "Test CA",
+      "jurisdiction": "GB"
+    },
+    "certificateHolder": {
+      "legalName": "Test Holder",
+      "jurisdiction": "GB"
+    },
+    "modelName": "IncompleteModel",
+    "modelVersion": "1.0.0",
+    "weightHash": {
+      "algorithm": "SHA-256",
+      "value": "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+      "serialisationMethod": "safetensors-canonical"
+    }
+  },
+  "architecture": {
+    "modelType": "convolutional",
+    "parameterCount": 5000000,
+    "inputModalities": ["image"],
+    "outputModalities": ["classification"]
+  },
+  "trainingData": {
+    "containsPatientData": true,
+    "dataCategories": ["medical-imaging"],
+    "licensingCompliance": {
+      "allDatasetsLicensed": true,
+      "complianceStatement": "All licensed."
+    },
+    "datasets": [
+      {
+        "datasetId": "ds-001",
+        "datasetName": "Clinical CXR Dataset",
+        "category": "medical-imaging",
+        "containsPatientData": true
+      }
+    ]
+  },
+  "evaluation": {
+    "methodology": "Test set evaluation.",
+    "primaryMetrics": [
+      {
+        "metricName": "auroc",
+        "value": 0.91
+      }
+    ],
+    "limitations": ["Limited validation."]
+  },
+  "usageEnvelope": {
+    "intendedPurpose": {
+      "description": "CXR triage."
+    },
+    "approvedPopulations": {
+      "ageRange": {"minimum": 18, "maximum": 120}
+    },
+    "excludedPopulations": ["Under 18"],
+    "inputSpecifications": {
+      "dataFormats": ["DICOM"]
+    },
+    "outputSpecifications": {
+      "format": "JSON"
+    },
+    "humanInTheLoop": {
+      "required": true
+    },
+    "excludedUses": ["Autonomous diagnosis"]
+  },
+  "runtime": {
+    "infrastructureRequirements": {
+      "minimumCompute": "GPU"
+    },
+    "logging": {
+      "requiredFields": ["inference_id"],
+      "retentionPeriod": "7 years"
+    }
+  },
+  "signature": {
+    "algorithm": "ES256",
+    "keyId": "test-key-001",
+    "signatureValue": "MEUCIQfakesig",
+    "signedAt": "2026-01-01T00:00:00Z"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "certificateId": "comp-guard-001",
+  "version": "1.5.0",
+  "issued": "2025-12-01",
+  "expires": "2027-01-01",
+  "riskTier": 2,
+  "status": "active",
+  "identity": {
+    "certificateAuthority": {"legalName": "Test CA", "jurisdiction": "GB"},
+    "certificateHolder": {"legalName": "Test Org", "jurisdiction": "GB"},
+    "modelName": "SafetyGuardrail",
+    "modelVersion": "1.5.0",
+    "weightHash": {"algorithm": "SHA-256", "value": "aabb0003"}
+  },
+  "architecture": {
+    "modelType": "rule-based",
+    "parameterCount": 0,
+    "inputModalities": ["application/json"],
+    "outputModalities": ["application/json"]
+  },
+  "signature": {
+    "algorithm": "ES256",
+    "keyId": "test-key",
+    "signatureValue": "ghi",
+    "signedAt": "2025-12-01T00:00:00Z"
+  }
+}

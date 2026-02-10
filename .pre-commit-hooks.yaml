@@ -1,0 +1,7 @@
+- id: mcc-validate
+  name: MCC Certificate Validator
+  description: Validate Model Context Certificates against MCC-STD-001
+  entry: mcc-validate check
+  language: python
+  types: [json]
+  stages: [pre-commit]

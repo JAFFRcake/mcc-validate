@@ -1,0 +1,129 @@
+name: 'MCC Validate'
+description: 'Validate Model Context Certificates against MCC-STD-001'
+branding:
+  icon: 'shield'
+  color: 'blue'
+
+inputs:
+  certificate:
+    description: 'Path or glob pattern to certificate JSON file(s)'
+    required: true
+  format:
+    description: 'Output format: console, json, html, sarif'
+    required: false
+    default: 'sarif'
+  strict:
+    description: 'Treat warnings as errors'
+    required: false
+    default: 'true'
+  components:
+    description: 'Directory containing component certificate files'
+    required: false
+    default: ''
+  weights:
+    description: 'Path to model weight file for hash verification'
+    required: false
+    default: ''
+  config:
+    description: 'Path to .mcc-validate.yaml config file'
+    required: false
+    default: ''
+  python-version:
+    description: 'Python version to use'
+    required: false
+    default: '3.11'
+  upload-sarif:
+    description: 'Upload SARIF results to GitHub Code Scanning'
+    required: false
+    default: 'true'
+  version:
+    description: 'Version of mcc-validate to install (default: latest)'
+    required: false
+    default: ''
+
+outputs:
+  exit-code:
+    description: 'Exit code from validation (0=valid, 1=errors, 2=warnings)'
+    value: ${{ steps.validate.outputs.exit-code }}
+  report-path:
+    description: 'Path to the generated report file'
+    value: ${{ steps.validate.outputs.report-path }}
+  valid:
+    description: 'Whether the certificate is valid (true/false)'
+    value: ${{ steps.validate.outputs.valid }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install mcc-validate
+      shell: bash
+      run: |
+        if [ -n "${{ inputs.version }}" ]; then
+          pip install "mcc-validate==${{ inputs.version }}"
+        else
+          pip install mcc-validate
+        fi
+
+    - name: Run validation
+      id: validate
+      shell: bash
+      run: |
+        # Determine report file extension
+        case "${{ inputs.format }}" in
+          sarif) EXT="sarif" ;;
+          html)  EXT="html" ;;
+          json)  EXT="json" ;;
+          *)     EXT="txt" ;;
+        esac
+        REPORT_PATH="mcc-validate-report.${EXT}"
+
+        # Build command-line options
+        OPTS=""
+        if [ "${{ inputs.strict }}" = "true" ]; then
+          OPTS="${OPTS} --strict"
+        fi
+        if [ -n "${{ inputs.config }}" ]; then
+          OPTS="${OPTS} --config ${{ inputs.config }}"
+        fi
+
+        CHECK_OPTS="--format ${{ inputs.format }} --output ${REPORT_PATH}"
+        if [ -n "${{ inputs.components }}" ]; then
+          CHECK_OPTS="${CHECK_OPTS} --components ${{ inputs.components }}"
+        fi
+        if [ -n "${{ inputs.weights }}" ]; then
+          CHECK_OPTS="${CHECK_OPTS} --weights ${{ inputs.weights }}"
+        fi
+
+        # Run validation, capture exit code without failing the step
+        set +e
+        mcc-validate ${OPTS} check ${{ inputs.certificate }} ${CHECK_OPTS}
+        EXIT_CODE=$?
+        set -e
+
+        # Set outputs
+        echo "exit-code=${EXIT_CODE}" >> $GITHUB_OUTPUT
+        echo "report-path=${REPORT_PATH}" >> $GITHUB_OUTPUT
+
+        if [ ${EXIT_CODE} -eq 0 ]; then
+          echo "valid=true" >> $GITHUB_OUTPUT
+        else
+          echo "valid=false" >> $GITHUB_OUTPUT
+        fi
+
+        # Fail step on validation errors (exit code 1)
+        if [ ${EXIT_CODE} -eq 1 ]; then
+          exit 1
+        fi
+
+    - name: Upload SARIF to GitHub Code Scanning
+      if: ${{ inputs.format == 'sarif' && inputs.upload-sarif == 'true' && always() }}
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: ${{ steps.validate.outputs.report-path }}
+        category: mcc-validate
+      continue-on-error: true

@@ -1,0 +1,1192 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mcc-standard.org/v1/mcc-schema.json",
+  "title": "Model Context Certificate (MCC-SCHEMA-001)",
+  "description": "Normative JSON Schema for Model Context Certificates as defined in MCC-STD-001 v0.1. This schema defines the structure, validation rules, and tier-conditional requirements for certificates governing AI systems deployed as medical devices.",
+  "type": "object",
+  "required": [
+    "@context",
+    "@type",
+    "certificateId",
+    "version",
+    "issued",
+    "expires",
+    "riskTier",
+    "status",
+    "identity",
+    "architecture",
+    "trainingData",
+    "evaluation",
+    "usageEnvelope",
+    "runtime",
+    "signature"
+  ],
+  "properties": {
+    "@context": {
+      "const": "https://mcc-standard.org/v1",
+      "description": "JSON-LD context URI. SHALL be the MCC v1 namespace."
+    },
+    "@type": {
+      "const": "ModelContextCertificate",
+      "description": "JSON-LD type. SHALL be 'ModelContextCertificate'."
+    },
+    "certificateId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique certificate identifier. SHALL be UUID v4."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Certificate version. SHALL conform to semantic versioning (MAJOR.MINOR.PATCH)."
+    },
+    "issued": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of certificate issuance (ISO 8601)."
+    },
+    "expires": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of certificate expiry (ISO 8601). Maximum validity periods: Tier 1 = 36 months, Tier 2 = 24 months, Tiers 3-4 = 12 months."
+    },
+    "riskTier": {
+      "type": "integer",
+      "enum": [1, 2, 3, 4],
+      "description": "Risk classification tier as defined in MCC-STD-001 Section 4."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "suspended", "revoked", "superseded", "expired"],
+      "description": "Current certificate status."
+    },
+
+    "identity": {
+      "$ref": "#/$defs/IdentityAndProvenance"
+    },
+    "architecture": {
+      "$ref": "#/$defs/ArchitectureSpecification"
+    },
+    "trainingData": {
+      "$ref": "#/$defs/TrainingDataAttestation"
+    },
+    "evaluation": {
+      "$ref": "#/$defs/EvaluationAndValidation"
+    },
+    "usageEnvelope": {
+      "$ref": "#/$defs/ApprovedUsageEnvelope"
+    },
+    "runtime": {
+      "$ref": "#/$defs/RuntimeAndMonitoring"
+    },
+    "approvedChangeEnvelope": {
+      "$ref": "#/$defs/ApprovedChangeEnvelope",
+      "description": "Optional. Defines pre-approved categories of change."
+    },
+    "composition": {
+      "$ref": "#/$defs/CompositionSpecification",
+      "description": "Required for composite systems comprising multiple certified components."
+    },
+    "extensions": {
+      "type": "object",
+      "description": "Namespaced extension properties for domain-specific requirements (e.g., radiology, pathology, genomics). Extensions SHALL NOT modify the semantics of core fields.",
+      "additionalProperties": true
+    },
+    "signature": {
+      "$ref": "#/$defs/DigitalSignature"
+    }
+  },
+  "additionalProperties": false,
+
+  "$defs": {
+
+    "IdentityAndProvenance": {
+      "type": "object",
+      "title": "Domain 1: Identity and Provenance",
+      "description": "Unique identification, tamper-evidence, and chain of custody for the certified model.",
+      "required": [
+        "certificateAuthority",
+        "certificateHolder",
+        "modelName",
+        "modelVersion",
+        "weightHash"
+      ],
+      "properties": {
+        "certificateAuthority": {
+          "$ref": "#/$defs/Organisation",
+          "description": "The body that issued the certificate."
+        },
+        "certificateHolder": {
+          "$ref": "#/$defs/Organisation",
+          "description": "The legal entity responsible for the AI system."
+        },
+        "modelName": {
+          "type": "string",
+          "description": "Human-readable model name."
+        },
+        "modelVersion": {
+          "type": "string",
+          "description": "Internal model version identifier used by the Certificate Holder."
+        },
+        "weightHash": {
+          "$ref": "#/$defs/CryptographicHash",
+          "description": "Cryptographic digest of the canonical serialisation of model weights."
+        },
+        "parentCertificate": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Certificate ID of the previous version, if this certificate supersedes another."
+        },
+        "trainingInfrastructure": {
+          "$ref": "#/$defs/TrainingInfrastructure",
+          "description": "Attestation of the compute environment used for training."
+        },
+        "chainOfCustody": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CustodyEvent"
+          },
+          "description": "Chronological record of model weight transfers between entities."
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "ArchitectureSpecification": {
+      "type": "object",
+      "title": "Domain 2: Architecture Specification",
+      "description": "Declarative description of the model's computational structure. Detail level varies by risk tier.",
+      "required": ["modelType", "parameterCount", "inputModalities", "outputModalities"],
+      "properties": {
+        "modelType": {
+          "type": "string",
+          "description": "Primary architecture family.",
+          "examples": ["transformer-decoder", "transformer-encoder-decoder", "convolutional", "recurrent", "state-space", "mixture-of-experts", "diffusion", "graph-neural-network", "hybrid"]
+        },
+        "parameterCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total trainable parameter count."
+        },
+        "precision": {
+          "type": "string",
+          "enum": ["FP32", "FP16", "BF16", "INT8", "INT4", "FP8", "mixed"],
+          "description": "Weight storage precision. 'mixed' indicates multiple precisions with detail in layers."
+        },
+        "inputModalities": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["text", "image", "audio", "video", "tabular", "time-series", "genomic", "molecular", "dicom", "fhir", "other"]
+          },
+          "minItems": 1,
+          "description": "Data modalities accepted as input."
+        },
+        "outputModalities": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["text", "classification", "regression", "segmentation", "detection", "generation", "embedding", "structured-data", "probability-distribution", "other"]
+          },
+          "minItems": 1,
+          "description": "Output modalities produced by the model."
+        },
+        "contextWindow": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum input sequence length (tokens, pixels, or domain-appropriate unit)."
+        },
+        "vocabularySize": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Size of the output vocabulary or class space."
+        },
+        "layerCount": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Total number of layers in the primary model. Required for Tier 2+."
+        },
+        "attentionMechanism": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "examples": ["multi-head", "grouped-query", "multi-query", "linear", "sparse", "sliding-window", "none"]
+            },
+            "headCount": { "type": "integer", "minimum": 1 },
+            "kvHeadCount": { "type": "integer", "minimum": 1 },
+            "headDimension": { "type": "integer", "minimum": 1 }
+          },
+          "description": "Attention mechanism specification. Required for Tier 2+ transformer models."
+        },
+        "normalisationType": {
+          "type": "string",
+          "examples": ["layer-norm", "rms-norm", "group-norm", "batch-norm", "none"],
+          "description": "Primary normalisation scheme. Required for Tier 2+."
+        },
+        "activationFunction": {
+          "type": "string",
+          "examples": ["gelu", "silu", "swiglu", "relu", "sigmoid", "tanh"],
+          "description": "Primary activation function. Required for Tier 2+."
+        },
+        "embeddingDimension": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Dimensionality of the model's hidden representations."
+        },
+        "layers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LayerSpecification"
+          },
+          "description": "Complete layer-by-layer specification. Required for Tiers 3-4."
+        },
+        "fineTuning": {
+          "$ref": "#/$defs/FineTuningSpecification",
+          "description": "Fine-tuning or adaptation applied to a base model."
+        },
+        "quantisation": {
+          "$ref": "#/$defs/QuantisationSpecification",
+          "description": "Post-training quantisation applied, if any."
+        },
+        "foundationModelRef": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "version": { "type": "string" },
+            "provider": { "type": "string" },
+            "certificateId": {
+              "type": "string",
+              "format": "uuid",
+              "description": "MCC certificate ID of the foundation model, if certified."
+            },
+            "isOpenSource": { "type": "boolean" },
+            "licence": { "type": "string" }
+          },
+          "required": ["name", "version", "provider"],
+          "description": "Reference to the base foundation model, if applicable."
+        },
+        "architecturalInnovations": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Description of non-standard architectural features. Required for Tiers 3-4."
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "TrainingDataAttestation": {
+      "type": "object",
+      "title": "Domain 3: Training Data Attestation",
+      "description": "Provenance, licensing, and characteristics of training data. Detail scales with risk tier.",
+      "required": ["containsPatientData", "dataCategories", "licensingCompliance"],
+      "properties": {
+        "containsPatientData": {
+          "type": "boolean",
+          "description": "Whether any patient or participant data was used in training."
+        },
+        "dataCategories": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "examples": ["web-text", "academic-literature", "clinical-notes", "medical-imaging", "genomic-sequences", "electronic-health-records", "clinical-trial-data", "synthetic-data", "code", "books", "curated-medical-qa"]
+          },
+          "minItems": 1,
+          "description": "Broad categories of training data. Required for all tiers."
+        },
+        "licensingCompliance": {
+          "type": "object",
+          "properties": {
+            "allDatasetsLicensed": { "type": "boolean" },
+            "complianceStatement": { "type": "string" },
+            "dataProtectionImpactAssessment": { "type": "boolean" }
+          },
+          "required": ["allDatasetsLicensed", "complianceStatement"],
+          "description": "Overall licensing compliance declaration. Required for all tiers."
+        },
+        "datasets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DatasetSpecification"
+          },
+          "description": "Individual dataset specifications. Required for Tier 2+."
+        },
+        "totalTrainingTokens": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Approximate total training tokens or equivalent data volume."
+        },
+        "dataProcessingPipeline": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ProcessingStep"
+          },
+          "description": "Ordered sequence of data preprocessing and augmentation steps. Required for Tier 3+."
+        },
+        "knownBiases": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "biasType": { "type": "string" },
+              "description": { "type": "string" },
+              "severity": { "type": "string", "enum": ["low", "medium", "high"] },
+              "affectedGroups": { "type": "array", "items": { "type": "string" } },
+              "mitigation": { "type": "string" }
+            },
+            "required": ["biasType", "description"]
+          },
+          "description": "Documented biases in training data and mitigations. Required for Tier 3+."
+        },
+        "syntheticDataDeclaration": {
+          "type": "object",
+          "properties": {
+            "containsSyntheticData": { "type": "boolean" },
+            "syntheticDataProportion": { "type": "number", "minimum": 0, "maximum": 1 },
+            "generationMethodology": { "type": "string" },
+            "validationAgainstRealData": { "type": "boolean" }
+          },
+          "description": "Declaration of synthetic data usage, if any."
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "EvaluationAndValidation": {
+      "type": "object",
+      "title": "Domain 4: Evaluation and Validation",
+      "description": "Evidence of fitness for declared purpose.",
+      "required": ["methodology", "primaryMetrics", "limitations"],
+      "properties": {
+        "methodology": {
+          "type": "string",
+          "description": "Description of overall evaluation methodology."
+        },
+        "primaryMetrics": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PerformanceMetric"
+          },
+          "minItems": 1,
+          "description": "Primary performance metrics with confidence intervals."
+        },
+        "secondaryMetrics": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PerformanceMetric"
+          },
+          "description": "Secondary or supporting performance metrics."
+        },
+        "benchmarks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/BenchmarkResult"
+          },
+          "description": "Results on established clinical or domain benchmarks."
+        },
+        "demographicStratification": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/StratifiedPerformance"
+          },
+          "description": "Performance broken down by demographic groups. Required for Tier 2+."
+        },
+        "clinicalBaselineComparison": {
+          "type": "object",
+          "properties": {
+            "baselineDescription": { "type": "string" },
+            "comparisonResults": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/PerformanceMetric" }
+            }
+          },
+          "description": "Comparison against clinical baseline or existing approved devices. Required for Tier 2+."
+        },
+        "failureModes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "mode": { "type": "string" },
+              "description": { "type": "string" },
+              "frequency": { "type": "string" },
+              "clinicalImpact": { "type": "string", "enum": ["negligible", "minor", "moderate", "major", "critical"] },
+              "mitigation": { "type": "string" }
+            },
+            "required": ["mode", "description", "clinicalImpact"]
+          },
+          "description": "Known failure modes and their clinical implications."
+        },
+        "adversarialAssessment": {
+          "type": "object",
+          "properties": {
+            "methodology": { "type": "string" },
+            "attackVectors": { "type": "array", "items": { "type": "string" } },
+            "robustnessScore": { "type": "number", "minimum": 0, "maximum": 1 },
+            "findings": { "type": "string" }
+          },
+          "description": "Adversarial robustness assessment. Required for Tier 2+."
+        },
+        "confidenceCalibration": {
+          "type": "object",
+          "properties": {
+            "methodology": { "type": "string" },
+            "expectedCalibrationError": { "type": "number", "minimum": 0, "maximum": 1 },
+            "calibrationCurve": { "type": "string", "description": "URI to calibration curve data." },
+            "findings": { "type": "string" }
+          },
+          "description": "Confidence calibration analysis. Required for Tier 3+."
+        },
+        "independentEvaluation": {
+          "type": "object",
+          "properties": {
+            "evaluator": { "$ref": "#/$defs/Organisation" },
+            "dateCompleted": { "type": "string", "format": "date" },
+            "reportReference": { "type": "string" },
+            "findings": { "type": "string" }
+          },
+          "description": "Independent evaluation details. Required for Tier 3+."
+        },
+        "clinicalEvidence": {
+          "type": "object",
+          "properties": {
+            "trialRegistration": { "type": "string", "description": "Clinical trial registry ID (e.g., ISRCTN, NCT)." },
+            "trialDesign": { "type": "string" },
+            "participantCount": { "type": "integer", "minimum": 0 },
+            "primaryEndpoints": { "type": "array", "items": { "type": "string" } },
+            "results": { "type": "string" },
+            "publicationReference": { "type": "string" }
+          },
+          "description": "Prospective clinical trial evidence. Required for Tier 4."
+        },
+        "realWorldEvidence": {
+          "type": "object",
+          "properties": {
+            "deploymentSites": { "type": "integer", "minimum": 0 },
+            "patientExposure": { "type": "integer", "minimum": 0 },
+            "monitoringPeriod": { "type": "string" },
+            "performanceSummary": { "type": "string" },
+            "adverseEvents": { "type": "integer", "minimum": 0 }
+          },
+          "description": "Real-world deployment performance data. Required for Tier 4 renewal."
+        },
+        "limitations": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "Known limitations and conditions under which performance degrades."
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "ApprovedUsageEnvelope": {
+      "type": "object",
+      "title": "Domain 5: Approved Usage Envelope",
+      "description": "Precise definition of conditions under which the certified system may be deployed.",
+      "required": ["intendedPurpose", "approvedPopulations", "inputSpecifications", "outputSpecifications", "humanInTheLoop", "excludedUses"],
+      "properties": {
+        "intendedPurpose": {
+          "type": "object",
+          "properties": {
+            "description": { "type": "string" },
+            "snomedCodes": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "SNOMED CT codes for the clinical domain."
+            },
+            "icdCodes": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "ICD-10/11 codes, if applicable."
+            },
+            "clinicalSetting": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "examples": ["primary-care", "secondary-care", "tertiary-care", "emergency", "community", "research", "screening", "remote-monitoring"]
+              }
+            }
+          },
+          "required": ["description"],
+          "description": "Clinical purpose for which the system is certified."
+        },
+        "approvedPopulations": {
+          "type": "object",
+          "properties": {
+            "ageRange": {
+              "type": "object",
+              "properties": {
+                "minimum": { "type": "integer" },
+                "maximum": { "type": "integer" }
+              }
+            },
+            "inclusions": { "type": "array", "items": { "type": "string" } },
+            "exclusions": { "type": "array", "items": { "type": "string" } },
+            "notes": { "type": "string" }
+          },
+          "description": "Patient populations for which the system is approved."
+        },
+        "excludedPopulations": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Patient populations explicitly excluded from the usage envelope."
+        },
+        "inputSpecifications": {
+          "type": "object",
+          "properties": {
+            "dataFormats": { "type": "array", "items": { "type": "string" } },
+            "qualityThresholds": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "parameter": { "type": "string" },
+                  "minimum": { "type": "string" },
+                  "description": { "type": "string" }
+                },
+                "required": ["parameter", "minimum"]
+              }
+            },
+            "requiredMetadata": { "type": "array", "items": { "type": "string" } },
+            "maximumInputSize": { "type": "string" }
+          },
+          "required": ["dataFormats"],
+          "description": "Specifications for acceptable input data."
+        },
+        "outputSpecifications": {
+          "type": "object",
+          "properties": {
+            "format": { "type": "string" },
+            "confidenceThresholds": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "action": { "type": "string" },
+                  "minimumConfidence": { "type": "number", "minimum": 0, "maximum": 1 },
+                  "belowThresholdBehaviour": { "type": "string" }
+                },
+                "required": ["action", "minimumConfidence", "belowThresholdBehaviour"]
+              }
+            },
+            "outputClasses": { "type": "array", "items": { "type": "string" } },
+            "uncertaintyRepresentation": { "type": "string" }
+          },
+          "required": ["format"],
+          "description": "Specifications for system outputs."
+        },
+        "humanInTheLoop": {
+          "type": "object",
+          "properties": {
+            "required": { "type": "boolean" },
+            "role": { "type": "string", "description": "Clinical role of the required reviewer." },
+            "minimumQualifications": { "type": "string" },
+            "requiredActions": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Specific actions the reviewer must take (e.g., 'review and confirm all positive findings')."
+            },
+            "maximumCaseloadPerReviewer": { "type": "integer" },
+            "timeConstraints": { "type": "string" }
+          },
+          "required": ["required"],
+          "description": "Human oversight requirements."
+        },
+        "excludedUses": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "Non-exhaustive list of uses for which the system is explicitly NOT approved."
+        },
+        "maximumDeploymentScale": {
+          "type": "object",
+          "properties": {
+            "maxConcurrentSites": { "type": "integer" },
+            "maxDailyInferences": { "type": "integer" },
+            "geographicRestrictions": { "type": "array", "items": { "type": "string" } }
+          },
+          "description": "Scale limitations, if applicable."
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "RuntimeAndMonitoring": {
+      "type": "object",
+      "title": "Domain 6: Runtime and Monitoring Requirements",
+      "description": "Operational requirements for maintaining certificate validity.",
+      "required": ["infrastructureRequirements", "logging"],
+      "properties": {
+        "infrastructureRequirements": {
+          "type": "object",
+          "properties": {
+            "minimumCompute": { "type": "string" },
+            "minimumMemory": { "type": "string" },
+            "maximumLatency": {
+              "type": "object",
+              "properties": {
+                "p50ms": { "type": "number" },
+                "p95ms": { "type": "number" },
+                "p99ms": { "type": "number" }
+              }
+            },
+            "availabilityRequirement": { "type": "string" },
+            "dataResidency": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Jurisdictions where inference data may be processed."
+            }
+          },
+          "description": "Minimum infrastructure for certified operation."
+        },
+        "softwareDependencies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "version": { "type": "string" },
+              "versionConstraint": { "type": "string", "description": "Semver range, e.g., '>=2.0.0 <3.0.0'" }
+            },
+            "required": ["name", "versionConstraint"]
+          },
+          "description": "Required software dependencies and version constraints."
+        },
+        "guardrails": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": { "type": "string", "enum": ["input-validation", "output-filter", "confidence-gate", "content-safety", "clinical-boundary", "rate-limit", "other"] },
+              "description": { "type": "string" },
+              "mandatory": { "type": "boolean" },
+              "configuration": { "type": "object" }
+            },
+            "required": ["type", "description", "mandatory"]
+          },
+          "description": "Required guardrail specifications."
+        },
+        "logging": {
+          "type": "object",
+          "properties": {
+            "requiredFields": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Fields that must be logged for every inference."
+            },
+            "retentionPeriod": { "type": "string", "description": "Minimum log retention period, e.g., '7 years'." },
+            "accessControls": { "type": "string" },
+            "auditTrail": { "type": "boolean" }
+          },
+          "required": ["requiredFields", "retentionPeriod"],
+          "description": "Logging obligations."
+        },
+        "driftDetection": {
+          "type": "object",
+          "properties": {
+            "methodology": { "type": "string" },
+            "monitoredDistributions": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Input or output distributions being monitored."
+            },
+            "thresholds": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "metric": { "type": "string" },
+                  "warningThreshold": { "type": "number" },
+                  "criticalThreshold": { "type": "number" },
+                  "windowSize": { "type": "string" }
+                },
+                "required": ["metric", "criticalThreshold"]
+              }
+            },
+            "responseProtocol": { "type": "string" }
+          },
+          "description": "Drift detection configuration. Required for Tier 3+."
+        },
+        "invalidationTriggers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "trigger": { "type": "string" },
+              "action": { "type": "string", "enum": ["suspend", "alert", "degrade-gracefully", "shutdown"] },
+              "remediationWindow": { "type": "string" }
+            },
+            "required": ["trigger", "action"]
+          },
+          "description": "Conditions under which the certificate is automatically suspended."
+        },
+        "incidentReporting": {
+          "type": "object",
+          "properties": {
+            "reportingAuthority": { "type": "string" },
+            "reportingTimeline": { "type": "string" },
+            "reportingCriteria": { "type": "array", "items": { "type": "string" } },
+            "contactDetails": { "type": "string" }
+          },
+          "description": "Incident reporting obligations."
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "ApprovedChangeEnvelope": {
+      "type": "object",
+      "title": "Approved Change Envelope",
+      "description": "Pre-approved categories of change that do not require recertification.",
+      "properties": {
+        "permittedChanges": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "changeType": {
+                "type": "string",
+                "enum": ["retraining", "fine-tuning", "quantisation", "rag-corpus-update", "guardrail-update", "dependency-update", "infrastructure-change", "other"]
+              },
+              "description": { "type": "string" },
+              "bounds": {
+                "type": "object",
+                "description": "Constraints within which the change is permitted.",
+                "additionalProperties": true
+              },
+              "validationRequired": {
+                "type": "object",
+                "properties": {
+                  "tests": { "type": "array", "items": { "type": "string" } },
+                  "minimumPerformance": {
+                    "type": "array",
+                    "items": { "$ref": "#/$defs/PerformanceMetric" }
+                  },
+                  "regressionThreshold": { "type": "number", "description": "Maximum permitted performance regression." }
+                }
+              },
+              "filingRequirements": {
+                "type": "object",
+                "properties": {
+                  "filingDeadlineDays": { "type": "integer" },
+                  "documentationRequired": { "type": "array", "items": { "type": "string" } }
+                }
+              }
+            },
+            "required": ["changeType", "description", "bounds", "validationRequired"]
+          }
+        },
+        "globalConstraints": {
+          "type": "object",
+          "properties": {
+            "maxCumulativeChangesBeforeReview": { "type": "integer" },
+            "maxTimeBetweenFullRevalidation": { "type": "string" },
+            "performanceFloor": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/PerformanceMetric" },
+              "description": "Absolute minimum performance; breach requires recertification regardless of change type."
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "CompositionSpecification": {
+      "type": "object",
+      "title": "Compositional Certification",
+      "description": "Specification for composite AI systems comprising multiple components.",
+      "required": ["components", "integrationArchitecture", "dataFlow"],
+      "properties": {
+        "components": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "componentName": { "type": "string" },
+              "componentRole": {
+                "type": "string",
+                "enum": ["foundation-model", "fine-tuned-model", "rag-corpus", "embedding-model", "guardrail", "input-processor", "output-processor", "orchestrator", "knowledge-base", "other"]
+              },
+              "certificateRef": {
+                "type": "string",
+                "format": "uuid",
+                "description": "MCC certificate ID of the component, if independently certified."
+              },
+              "inlineSpecification": {
+                "type": "object",
+                "description": "Full specification for components without independent certificates. Must meet the composite system's tier requirements."
+              },
+              "version": { "type": "string" },
+              "updateFrequency": { "type": "string" }
+            },
+            "required": ["componentName", "componentRole"]
+          },
+          "minItems": 2,
+          "description": "Components comprising the composite system."
+        },
+        "integrationArchitecture": {
+          "type": "object",
+          "properties": {
+            "description": { "type": "string" },
+            "diagramRef": { "type": "string", "description": "URI to architecture diagram." },
+            "orchestrationPattern": {
+              "type": "string",
+              "examples": ["sequential", "parallel", "conditional", "iterative", "agent-based"]
+            }
+          },
+          "required": ["description"],
+          "description": "How components are integrated."
+        },
+        "dataFlow": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "from": { "type": "string" },
+              "to": { "type": "string" },
+              "dataType": { "type": "string" },
+              "transformation": { "type": "string" }
+            },
+            "required": ["from", "to", "dataType"]
+          },
+          "minItems": 1,
+          "description": "Data flow between components."
+        },
+        "emergentProperties": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Properties of the composed system that are not attributable to any single component."
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "DigitalSignature": {
+      "type": "object",
+      "title": "Certificate Digital Signature",
+      "description": "JWS (RFC 7515) signature binding the certificate to the Certificate Authority.",
+      "required": ["algorithm", "keyId", "signatureValue", "signedAt"],
+      "properties": {
+        "algorithm": {
+          "type": "string",
+          "enum": ["RS256", "RS384", "RS512", "ES256", "ES384", "ES512"],
+          "description": "Signature algorithm. Minimum RS256 or ES256."
+        },
+        "keyId": {
+          "type": "string",
+          "description": "Key identifier for the Certificate Authority's signing key."
+        },
+        "certificateChain": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "X.509 certificate chain for the signing key."
+        },
+        "signatureValue": {
+          "type": "string",
+          "description": "Base64url-encoded signature value."
+        },
+        "signedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of signature creation."
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "Organisation": {
+      "type": "object",
+      "properties": {
+        "legalName": { "type": "string" },
+        "registrationNumber": { "type": "string" },
+        "jurisdiction": { "type": "string" },
+        "address": { "type": "string" },
+        "contactEmail": { "type": "string", "format": "email" },
+        "website": { "type": "string", "format": "uri" }
+      },
+      "required": ["legalName", "jurisdiction"],
+      "additionalProperties": false
+    },
+
+    "CryptographicHash": {
+      "type": "object",
+      "properties": {
+        "algorithm": {
+          "type": "string",
+          "enum": ["SHA-256", "SHA-384", "SHA-512", "SHA3-256", "SHA3-512"],
+          "description": "Hash algorithm. SHA-256 minimum."
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]+$",
+          "description": "Hexadecimal hash value."
+        },
+        "serialisationMethod": {
+          "type": "string",
+          "description": "Canonical serialisation method used before hashing (e.g., 'safetensors-canonical', 'gguf-v3')."
+        }
+      },
+      "required": ["algorithm", "value", "serialisationMethod"],
+      "additionalProperties": false
+    },
+
+    "TrainingInfrastructure": {
+      "type": "object",
+      "properties": {
+        "provider": { "type": "string", "description": "Cloud provider or on-premises declaration." },
+        "hardwareType": { "type": "string", "examples": ["NVIDIA H100", "NVIDIA A100", "Google TPU v5", "AMD MI300X"] },
+        "acceleratorCount": { "type": "integer", "minimum": 1 },
+        "interconnect": { "type": "string" },
+        "computeJurisdiction": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Jurisdictions where training compute was located."
+        },
+        "totalComputeHours": { "type": "number" },
+        "estimatedCO2Tonnes": { "type": "number", "description": "Estimated carbon footprint of training." }
+      },
+      "required": ["provider", "computeJurisdiction"],
+      "additionalProperties": false
+    },
+
+    "CustodyEvent": {
+      "type": "object",
+      "properties": {
+        "timestamp": { "type": "string", "format": "date-time" },
+        "event": { "type": "string", "enum": ["created", "transferred", "copied", "deployed", "archived"] },
+        "fromEntity": { "type": "string" },
+        "toEntity": { "type": "string" },
+        "weightHashAtTransfer": { "$ref": "#/$defs/CryptographicHash" },
+        "notes": { "type": "string" }
+      },
+      "required": ["timestamp", "event"],
+      "additionalProperties": false
+    },
+
+    "LayerSpecification": {
+      "type": "object",
+      "properties": {
+        "layerIndex": { "type": "integer", "minimum": 0 },
+        "layerType": {
+          "type": "string",
+          "examples": ["embedding", "transformer-block", "attention", "feed-forward", "convolution", "pooling", "normalisation", "dropout", "classification-head", "regression-head"]
+        },
+        "parameters": { "type": "integer" },
+        "configuration": {
+          "type": "object",
+          "description": "Layer-specific configuration parameters.",
+          "additionalProperties": true
+        },
+        "precision": { "type": "string" },
+        "skipConnections": {
+          "type": "array",
+          "items": { "type": "integer" },
+          "description": "Indices of layers this layer receives skip connections from."
+        }
+      },
+      "required": ["layerIndex", "layerType"],
+      "additionalProperties": false
+    },
+
+    "FineTuningSpecification": {
+      "type": "object",
+      "properties": {
+        "method": {
+          "type": "string",
+          "examples": ["full", "lora", "qlora", "prefix-tuning", "prompt-tuning", "adapter", "rlhf", "dpo", "constitutional-ai"]
+        },
+        "trainableParameters": { "type": "integer" },
+        "epochs": { "type": "number" },
+        "learningRate": { "type": "number" },
+        "stages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "stageName": { "type": "string" },
+              "method": { "type": "string" },
+              "datasetRef": { "type": "string" },
+              "description": { "type": "string" }
+            },
+            "required": ["stageName", "method"]
+          },
+          "description": "Ordered fine-tuning stages (e.g., SFT then RLHF)."
+        }
+      },
+      "required": ["method"],
+      "additionalProperties": false
+    },
+
+    "QuantisationSpecification": {
+      "type": "object",
+      "properties": {
+        "method": {
+          "type": "string",
+          "examples": ["GPTQ", "AWQ", "GGUF", "bitsandbytes", "static", "dynamic", "none"]
+        },
+        "targetPrecision": { "type": "string" },
+        "calibrationDataset": { "type": "string" },
+        "performanceImpact": { "type": "string" }
+      },
+      "required": ["method", "targetPrecision"],
+      "additionalProperties": false
+    },
+
+    "DatasetSpecification": {
+      "type": "object",
+      "properties": {
+        "datasetId": {
+          "type": "string",
+          "description": "Unique identifier for the dataset."
+        },
+        "datasetName": { "type": "string" },
+        "datasetVersion": { "type": "string" },
+        "category": {
+          "type": "string",
+          "examples": ["clinical-notes", "medical-imaging", "genomic", "ehr", "literature", "synthetic", "web-text"]
+        },
+        "source": { "type": "string" },
+        "dataController": {
+          "$ref": "#/$defs/Organisation",
+          "description": "Data controller from whom the data was licensed. Required for Tier 3+ clinical data."
+        },
+        "dataSharingAgreement": {
+          "type": "object",
+          "properties": {
+            "reference": { "type": "string" },
+            "dateExecuted": { "type": "string", "format": "date" },
+            "permittedUses": { "type": "array", "items": { "type": "string" } },
+            "expiryDate": { "type": "string", "format": "date" }
+          },
+          "description": "Data sharing agreement details. Required for Tier 3+ clinical data."
+        },
+        "licence": { "type": "string" },
+        "recordCount": { "type": "integer", "minimum": 0 },
+        "tokenCount": { "type": "integer", "minimum": 0 },
+        "temporalCoverage": {
+          "type": "object",
+          "properties": {
+            "startDate": { "type": "string", "format": "date" },
+            "endDate": { "type": "string", "format": "date" }
+          }
+        },
+        "geographicCoverage": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "demographicDistribution": {
+          "type": "object",
+          "properties": {
+            "ageDistribution": { "type": "object", "additionalProperties": { "type": "number" } },
+            "sexDistribution": { "type": "object", "additionalProperties": { "type": "number" } },
+            "ethnicityDistribution": { "type": "object", "additionalProperties": { "type": "number" } },
+            "otherDistributions": { "type": "object", "additionalProperties": true }
+          },
+          "description": "Demographic distribution of the dataset. Required for Tier 2+ person-level data."
+        },
+        "knownBiases": { "type": "array", "items": { "type": "string" } },
+        "qualityAssessment": { "type": "string" },
+        "containsPatientData": { "type": "boolean" },
+        "deidentificationMethod": { "type": "string" },
+        "ethicsApproval": {
+          "type": "object",
+          "properties": {
+            "body": { "type": "string" },
+            "reference": { "type": "string" },
+            "dateApproved": { "type": "string", "format": "date" }
+          }
+        }
+      },
+      "required": ["datasetId", "datasetName", "category"],
+      "additionalProperties": false
+    },
+
+    "ProcessingStep": {
+      "type": "object",
+      "properties": {
+        "stepOrder": { "type": "integer", "minimum": 1 },
+        "stepName": { "type": "string" },
+        "description": { "type": "string" },
+        "toolsUsed": { "type": "array", "items": { "type": "string" } },
+        "inputFormat": { "type": "string" },
+        "outputFormat": { "type": "string" },
+        "recordsIn": { "type": "integer" },
+        "recordsOut": { "type": "integer" },
+        "qualityChecks": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["stepOrder", "stepName", "description"],
+      "additionalProperties": false
+    },
+
+    "PerformanceMetric": {
+      "type": "object",
+      "properties": {
+        "metricName": {
+          "type": "string",
+          "examples": ["accuracy", "sensitivity", "specificity", "ppv", "npv", "auroc", "auprc", "f1", "dice", "mae", "rmse", "bleu", "rouge", "perplexity", "ece"]
+        },
+        "value": { "type": "number" },
+        "confidenceInterval": {
+          "type": "object",
+          "properties": {
+            "lower": { "type": "number" },
+            "upper": { "type": "number" },
+            "level": { "type": "number", "default": 0.95 }
+          },
+          "required": ["lower", "upper"]
+        },
+        "evaluationDataset": { "type": "string" },
+        "sampleSize": { "type": "integer", "minimum": 0 },
+        "notes": { "type": "string" }
+      },
+      "required": ["metricName", "value"],
+      "additionalProperties": false
+    },
+
+    "BenchmarkResult": {
+      "type": "object",
+      "properties": {
+        "benchmarkName": { "type": "string" },
+        "benchmarkVersion": { "type": "string" },
+        "benchmarkProvider": { "type": "string" },
+        "score": { "type": "number" },
+        "maximumScore": { "type": "number" },
+        "percentile": { "type": "number", "minimum": 0, "maximum": 100 },
+        "dateEvaluated": { "type": "string", "format": "date" },
+        "notes": { "type": "string" }
+      },
+      "required": ["benchmarkName", "score", "dateEvaluated"],
+      "additionalProperties": false
+    },
+
+    "StratifiedPerformance": {
+      "type": "object",
+      "properties": {
+        "stratificationAxis": {
+          "type": "string",
+          "examples": ["age-group", "sex", "ethnicity", "clinical-severity", "imaging-modality", "geographic-region"]
+        },
+        "strata": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "stratumName": { "type": "string" },
+              "sampleSize": { "type": "integer" },
+              "metrics": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/PerformanceMetric" }
+              }
+            },
+            "required": ["stratumName", "sampleSize", "metrics"]
+          }
+        },
+        "disparityAnalysis": { "type": "string" }
+      },
+      "required": ["stratificationAxis", "strata"],
+      "additionalProperties": false
+    }
+  }
+}

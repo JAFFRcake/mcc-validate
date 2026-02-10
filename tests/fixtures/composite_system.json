@@ -1,0 +1,148 @@
+{
+  "@context": "https://mcc-standard.org/v1",
+  "@type": "ModelContextCertificate",
+  "certificateId": "comp-sys-001",
+  "version": "1.0.0",
+  "issued": "2026-01-01",
+  "expires": "2027-01-01",
+  "riskTier": 3,
+  "status": "active",
+  "identity": {
+    "certificateAuthority": {
+      "legalName": "Test CA",
+      "jurisdiction": "GB"
+    },
+    "certificateHolder": {
+      "legalName": "Test Org",
+      "jurisdiction": "GB"
+    },
+    "modelName": "CompositeTriageSystem",
+    "modelVersion": "1.0.0",
+    "weightHash": {
+      "algorithm": "SHA-256",
+      "value": "aabbccdd00112233",
+      "serialisationMethod": "safetensors-canonical"
+    }
+  },
+  "architecture": {
+    "modelType": "composite",
+    "parameterCount": 8000000000,
+    "inputModalities": ["image/dicom"],
+    "outputModalities": ["application/json"]
+  },
+  "trainingData": {
+    "containsPatientData": true,
+    "dataCategories": ["clinical"],
+    "licensingCompliance": {
+      "allDatasetsLicensed": true,
+      "complianceStatement": "All datasets appropriately licensed."
+    },
+    "datasets": [
+      {
+        "datasetId": "ds-001",
+        "datasetName": "CompositeData",
+        "category": "clinical",
+        "dataController": {
+          "legalName": "NHS Trust",
+          "jurisdiction": "GB"
+        },
+        "dataSharingAgreement": {
+          "agreementType": "DSA",
+          "expiryDate": "2028-01-01"
+        }
+      }
+    ],
+    "dataProcessingPipeline": [
+      {
+        "stepOrder": 1,
+        "stepName": "extraction",
+        "description": "Extract images from PACS"
+      }
+    ],
+    "knownBiases": [
+      {
+        "biasType": "demographic",
+        "description": "Limited ethnic diversity in training set"
+      }
+    ]
+  },
+  "evaluation": {
+    "methodology": "Multi-component evaluation",
+    "primaryMetrics": [
+      {"metricName": "auroc", "value": 0.94, "confidenceInterval": {"lower": 0.92, "upper": 0.96}},
+      {"metricName": "sensitivity", "value": 0.91, "confidenceInterval": {"lower": 0.89, "upper": 0.93}}
+    ],
+    "limitations": ["Composite system limitations"],
+    "demographicStratification": [
+      {"stratificationAxis": "sex", "strata": []},
+      {"stratificationAxis": "age-group", "strata": []},
+      {"stratificationAxis": "ethnicity", "strata": []}
+    ],
+    "adversarialAssessment": {
+      "methodology": "Standard adversarial testing",
+      "findings": "No significant vulnerabilities found"
+    },
+    "independentEvaluation": {
+      "evaluator": {"legalName": "Eval Corp", "jurisdiction": "GB"},
+      "dateCompleted": "2025-12-01",
+      "findings": "System meets requirements"
+    },
+    "confidenceCalibration": {
+      "methodology": "Platt scaling",
+      "expectedCalibrationError": 0.03,
+      "findings": "Well calibrated"
+    }
+  },
+  "usageEnvelope": {
+    "intendedPurpose": {"description": "Composite triage system"},
+    "approvedPopulations": {"ageRange": {"minimum": 18, "maximum": 120}},
+    "excludedPopulations": ["paediatric"],
+    "inputSpecifications": {"dataFormats": ["DICOM"]},
+    "outputSpecifications": {"format": "JSON"},
+    "humanInTheLoop": {"required": true},
+    "excludedUses": ["Standalone diagnosis"]
+  },
+  "runtime": {
+    "infrastructureRequirements": {"minimumCompute": "GPU"},
+    "logging": {"requiredFields": ["inference_id", "timestamp"], "retentionPeriod": "7 years"},
+    "driftDetection": {
+      "methodology": "PSI monitoring",
+      "thresholds": [{"metric": "auroc", "criticalThreshold": 0.85}]
+    }
+  },
+  "composition": {
+    "components": [
+      {
+        "componentName": "ImagePreprocessor",
+        "componentRole": "input-processor",
+        "certificateRef": "comp-img-001",
+        "version": "2.0.0"
+      },
+      {
+        "componentName": "TriageModel",
+        "componentRole": "foundation-model",
+        "certificateRef": "comp-model-001",
+        "version": "3.0.0"
+      },
+      {
+        "componentName": "SafetyGuardrail",
+        "componentRole": "guardrail",
+        "certificateRef": "comp-guard-001",
+        "version": "1.5.0"
+      }
+    ],
+    "integrationArchitecture": {
+      "description": "Sequential pipeline: preprocess -> model -> guardrail"
+    },
+    "dataFlow": [
+      {"from": "ImagePreprocessor", "to": "TriageModel", "dataType": "tensor"},
+      {"from": "TriageModel", "to": "SafetyGuardrail", "dataType": "prediction"}
+    ]
+  },
+  "signature": {
+    "algorithm": "ES256",
+    "keyId": "test-key-001",
+    "signatureValue": "dGVzdC1zaWduYXR1cmU",
+    "signedAt": "2026-01-01T00:00:00Z"
+  }
+}

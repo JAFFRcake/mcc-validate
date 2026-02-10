@@ -1,0 +1,27 @@
+{
+  "certificateId": "comp-img-001",
+  "version": "2.0.0",
+  "issued": "2025-12-01",
+  "expires": "2027-01-01",
+  "riskTier": 1,
+  "status": "active",
+  "identity": {
+    "certificateAuthority": {"legalName": "Test CA", "jurisdiction": "GB"},
+    "certificateHolder": {"legalName": "Test Org", "jurisdiction": "GB"},
+    "modelName": "ImagePreprocessor",
+    "modelVersion": "2.0.0",
+    "weightHash": {"algorithm": "SHA-256", "value": "aabb0001"}
+  },
+  "architecture": {
+    "modelType": "image-processor",
+    "parameterCount": 0,
+    "inputModalities": ["image/dicom"],
+    "outputModalities": ["tensor"]
+  },
+  "signature": {
+    "algorithm": "ES256",
+    "keyId": "test-key",
+    "signatureValue": "abc",
+    "signedAt": "2025-12-01T00:00:00Z"
+  }
+}

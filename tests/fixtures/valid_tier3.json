@@ -1,0 +1,1151 @@
+{
+  "@context": "https://mcc-standard.org/v1",
+  "@type": "ModelContextCertificate",
+  "certificateId": "550e8400-e29b-41d4-a716-446655440000",
+  "version": "1.0.0",
+  "issued": "2026-03-01",
+  "expires": "2027-03-01",
+  "riskTier": 3,
+  "status": "active",
+  "identity": {
+    "certificateAuthority": {
+      "legalName": "UK AI Medical Device Certification Ltd",
+      "registrationNumber": "14523678",
+      "jurisdiction": "GB",
+      "address": "10 South Colonnade, London E14 4PU",
+      "contactEmail": "certifications@ukaimdc.org.uk",
+      "website": "https://ukaimdc.org.uk"
+    },
+    "certificateHolder": {
+      "legalName": "Thorax AI Ltd",
+      "registrationNumber": "12345678",
+      "jurisdiction": "GB",
+      "address": "Oxford Science Park, Oxford OX4 4GA",
+      "contactEmail": "regulatory@thoraxai.com",
+      "website": "https://thoraxai.com"
+    },
+    "modelName": "ThoraxTriage-v3",
+    "modelVersion": "3.2.1",
+    "weightHash": {
+      "algorithm": "SHA-256",
+      "value": "a3f2b8c91d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0",
+      "serialisationMethod": "safetensors-canonical"
+    },
+    "parentCertificate": "660f9511-f30c-52e5-b827-557766550111",
+    "trainingInfrastructure": {
+      "provider": "Microsoft Azure (UK South)",
+      "hardwareType": "NVIDIA A100",
+      "acceleratorCount": 64,
+      "interconnect": "InfiniBand NDR",
+      "computeJurisdiction": [
+        "GB"
+      ],
+      "totalComputeHours": 12480,
+      "estimatedCO2Tonnes": 3.2
+    },
+    "chainOfCustody": [
+      {
+        "timestamp": "2025-11-15T14:30:00Z",
+        "event": "created",
+        "fromEntity": "Thorax AI Training Pipeline",
+        "toEntity": "Thorax AI Model Registry",
+        "weightHashAtTransfer": {
+          "algorithm": "SHA-256",
+          "value": "a3f2b8c91d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0",
+          "serialisationMethod": "safetensors-canonical"
+        }
+      },
+      {
+        "timestamp": "2025-12-01T09:00:00Z",
+        "event": "transferred",
+        "fromEntity": "Thorax AI Model Registry",
+        "toEntity": "UK AI Medical Device Certification Ltd — Evaluation Environment",
+        "weightHashAtTransfer": {
+          "algorithm": "SHA-256",
+          "value": "a3f2b8c91d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0",
+          "serialisationMethod": "safetensors-canonical"
+        }
+      },
+      {
+        "timestamp": "2026-02-15T10:00:00Z",
+        "event": "deployed",
+        "fromEntity": "Thorax AI Model Registry",
+        "toEntity": "NHS Trust Production Environment (Azure UK South)",
+        "weightHashAtTransfer": {
+          "algorithm": "SHA-256",
+          "value": "a3f2b8c91d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0",
+          "serialisationMethod": "safetensors-canonical"
+        }
+      }
+    ]
+  },
+  "architecture": {
+    "modelType": "convolutional",
+    "parameterCount": 44200000,
+    "precision": "FP32",
+    "inputModalities": [
+      "image"
+    ],
+    "outputModalities": [
+      "classification",
+      "probability-distribution"
+    ],
+    "contextWindow": 1,
+    "vocabularySize": 14,
+    "layerCount": 121,
+    "normalisationType": "batch-norm",
+    "activationFunction": "relu",
+    "embeddingDimension": 1024,
+    "layers": [
+      {
+        "layerIndex": 0,
+        "layerType": "convolution",
+        "configuration": {
+          "inputChannels": 1,
+          "outputChannels": 64,
+          "kernelSize": 7,
+          "stride": 2
+        }
+      },
+      {
+        "layerIndex": 1,
+        "layerType": "pooling",
+        "configuration": {
+          "type": "max",
+          "kernelSize": 3,
+          "stride": 2
+        }
+      },
+      {
+        "layerIndex": 2,
+        "layerType": "transformer-block",
+        "configuration": {
+          "description": "DenseNet-121 dense blocks (4 blocks: 6, 12, 24, 16 layers) with transition layers. Full per-layer specification in supplementary document ThoraxTriage-v3-arch-detail.json"
+        }
+      },
+      {
+        "layerIndex": 120,
+        "layerType": "classification-head",
+        "parameters": 14336,
+        "configuration": {
+          "type": "multi-label-sigmoid",
+          "outputClasses": 14,
+          "globalAveragePooling": true
+        }
+      }
+    ],
+    "fineTuning": {
+      "method": "full",
+      "trainableParameters": 44200000,
+      "epochs": 50,
+      "learningRate": 0.0001,
+      "stages": [
+        {
+          "stageName": "ImageNet pretraining",
+          "method": "full",
+          "datasetRef": "imagenet-1k-v1",
+          "description": "Pretraining on ImageNet-1K for feature extraction."
+        },
+        {
+          "stageName": "Clinical fine-tuning",
+          "method": "full",
+          "datasetRef": "thorax-clinical-combined-v3",
+          "description": "Fine-tuning on combined clinical chest X-ray datasets."
+        },
+        {
+          "stageName": "NHS site adaptation",
+          "method": "full",
+          "datasetRef": "nhs-oxford-cxr-v2",
+          "description": "Adaptation on NHS-specific imaging data."
+        }
+      ]
+    },
+    "quantisation": {
+      "method": "none",
+      "targetPrecision": "FP32"
+    },
+    "architecturalInnovations": [
+      "Multi-label attention pooling replacing global average pooling for improved localisation",
+      "Auxiliary segmentation branch for interpretability (attention maps at inference)"
+    ]
+  },
+  "trainingData": {
+    "containsPatientData": true,
+    "dataCategories": [
+      "medical-imaging",
+      "clinical-notes"
+    ],
+    "licensingCompliance": {
+      "allDatasetsLicensed": true,
+      "complianceStatement": "All datasets used under valid data sharing agreements or open research licences. Patient data processed under Section 251 approval (CAG ref: 22/CAG/0147). DPIA completed 2025-03-15.",
+      "dataProtectionImpactAssessment": true
+    },
+    "datasets": [
+      {
+        "datasetId": "imagenet-1k-v1",
+        "datasetName": "ImageNet-1K",
+        "datasetVersion": "2012",
+        "category": "web-text",
+        "source": "Stanford Vision Lab / Princeton University",
+        "licence": "Custom research licence",
+        "recordCount": 1281167,
+        "containsPatientData": false
+      },
+      {
+        "datasetId": "chestxray14-nih-v1",
+        "datasetName": "NIH ChestX-ray14",
+        "datasetVersion": "1.0",
+        "category": "medical-imaging",
+        "source": "National Institutes of Health Clinical Center",
+        "licence": "CC0 1.0 Universal",
+        "recordCount": 112120,
+        "temporalCoverage": {
+          "startDate": "1992-01-01",
+          "endDate": "2015-12-31"
+        },
+        "geographicCoverage": [
+          "US"
+        ],
+        "demographicDistribution": {
+          "ageDistribution": {
+            "0-18": 0.02,
+            "19-40": 0.18,
+            "41-60": 0.35,
+            "61-80": 0.38,
+            "80+": 0.07
+          },
+          "sexDistribution": {
+            "male": 0.563,
+            "female": 0.437
+          }
+        },
+        "containsPatientData": true,
+        "deidentificationMethod": "HIPAA Safe Harbor",
+        "qualityAssessment": "NLP-extracted labels from reports; ~10% estimated label error rate on minority classes"
+      },
+      {
+        "datasetId": "mimic-cxr-v2",
+        "datasetName": "MIMIC-CXR",
+        "datasetVersion": "2.0.0",
+        "category": "medical-imaging",
+        "source": "MIT / Beth Israel Deaconess Medical Center",
+        "licence": "PhysioNet Credentialed Health Data License 1.5.0",
+        "recordCount": 377110,
+        "temporalCoverage": {
+          "startDate": "2011-01-01",
+          "endDate": "2016-12-31"
+        },
+        "geographicCoverage": [
+          "US"
+        ],
+        "demographicDistribution": {
+          "ageDistribution": {
+            "0-18": 0.01,
+            "19-40": 0.12,
+            "41-60": 0.28,
+            "61-80": 0.42,
+            "80+": 0.17
+          },
+          "sexDistribution": {
+            "male": 0.521,
+            "female": 0.479
+          },
+          "ethnicityDistribution": {
+            "white": 0.63,
+            "black": 0.16,
+            "hispanic": 0.06,
+            "asian": 0.04,
+            "other": 0.11
+          }
+        },
+        "containsPatientData": true,
+        "deidentificationMethod": "HIPAA de-identification; CheXpert labeller + radiologist review",
+        "qualityAssessment": "CheXpert-labelled with radiologist adjudication. Higher quality than ChestX-ray14."
+      },
+      {
+        "datasetId": "nhs-oxford-cxr-v2",
+        "datasetName": "Oxford University Hospitals NHS Foundation Trust CXR Dataset",
+        "datasetVersion": "2.0",
+        "category": "medical-imaging",
+        "source": "Oxford University Hospitals NHS Foundation Trust",
+        "dataController": {
+          "legalName": "Oxford University Hospitals NHS Foundation Trust",
+          "registrationNumber": "Z7520483",
+          "jurisdiction": "GB",
+          "contactEmail": "datasharing@ouh.nhs.uk"
+        },
+        "dataSharingAgreement": {
+          "reference": "DSA-2024-OUH-THORAX-003",
+          "dateExecuted": "2024-06-15",
+          "permittedUses": [
+            "AI model development for chest X-ray triage",
+            "Validation and performance monitoring"
+          ],
+          "expiryDate": "2029-06-14"
+        },
+        "licence": "NHS Data Sharing Agreement",
+        "recordCount": 85000,
+        "temporalCoverage": {
+          "startDate": "2018-01-01",
+          "endDate": "2024-12-31"
+        },
+        "geographicCoverage": [
+          "GB"
+        ],
+        "demographicDistribution": {
+          "ageDistribution": {
+            "0-18": 0.08,
+            "19-40": 0.15,
+            "41-60": 0.27,
+            "61-80": 0.35,
+            "80+": 0.15
+          },
+          "sexDistribution": {
+            "male": 0.51,
+            "female": 0.49
+          },
+          "ethnicityDistribution": {
+            "white-british": 0.72,
+            "south-asian": 0.08,
+            "black-african-caribbean": 0.05,
+            "mixed": 0.03,
+            "other": 0.06,
+            "not-stated": 0.06
+          }
+        },
+        "knownBiases": [
+          "Under-representation of <18 in pathology-positive cases",
+          "6% not-stated ethnicity may mask demographic skew"
+        ],
+        "containsPatientData": true,
+        "deidentificationMethod": "Pseudonymised per ICO guidelines; DICOM headers stripped; face region redacted",
+        "ethicsApproval": {
+          "body": "South Central Oxford C Research Ethics Committee",
+          "reference": "24/SC/0312",
+          "dateApproved": "2024-04-10"
+        },
+        "qualityAssessment": "Gold-standard consultant radiologist labels with dual-read adjudication. >95% estimated accuracy."
+      }
+    ],
+    "totalTrainingTokens": 0,
+    "dataProcessingPipeline": [
+      {
+        "stepOrder": 1,
+        "stepName": "DICOM extraction",
+        "description": "Extract pixel arrays from DICOM; apply VOI LUT; convert to 16-bit grayscale PNG.",
+        "toolsUsed": [
+          "pydicom 2.4.0"
+        ],
+        "inputFormat": "DICOM",
+        "outputFormat": "16-bit PNG",
+        "recordsIn": 574230,
+        "recordsOut": 574230,
+        "qualityChecks": [
+          "DICOM header validation",
+          "pixel range verification"
+        ]
+      },
+      {
+        "stepOrder": 2,
+        "stepName": "Quality filtering",
+        "description": "Remove corrupted, non-PA/AP, paediatric (from adult sets), and artefact-heavy images.",
+        "toolsUsed": [
+          "custom quality classifier v2.0"
+        ],
+        "inputFormat": "16-bit PNG",
+        "outputFormat": "16-bit PNG",
+        "recordsIn": 574230,
+        "recordsOut": 548917,
+        "qualityChecks": [
+          "Manual review of 1000 excluded samples"
+        ]
+      },
+      {
+        "stepOrder": 3,
+        "stepName": "Resize and normalise",
+        "description": "Resize to 1024x1024 (aspect-preserving, zero-padded); normalise to [0,1]; CLAHE enhancement.",
+        "toolsUsed": [
+          "torchvision 0.18.0",
+          "OpenCV 4.9.0"
+        ],
+        "inputFormat": "16-bit PNG",
+        "outputFormat": "32-bit float tensor",
+        "recordsIn": 548917,
+        "recordsOut": 548917,
+        "qualityChecks": [
+          "Visual inspection of 500 random samples"
+        ]
+      },
+      {
+        "stepOrder": 4,
+        "stepName": "Label harmonisation",
+        "description": "Map to unified 14-class taxonomy. Resolve conflicts via majority vote with radiologist adjudication.",
+        "toolsUsed": [
+          "custom label mapper v3.0"
+        ],
+        "inputFormat": "Dataset-specific CSVs",
+        "outputFormat": "Multi-label binary vectors",
+        "recordsIn": 548917,
+        "recordsOut": 548917,
+        "qualityChecks": [
+          "100% label mapping audit",
+          "Cross-dataset consistency analysis"
+        ]
+      },
+      {
+        "stepOrder": 5,
+        "stepName": "Train/val/test split",
+        "description": "Patient-level 70/15/15 split, stratified by pathology prevalence and source.",
+        "toolsUsed": [
+          "scikit-learn 1.4.0"
+        ],
+        "inputFormat": "Unified dataset",
+        "outputFormat": "Three partitions",
+        "recordsIn": 548917,
+        "recordsOut": 548917,
+        "qualityChecks": [
+          "Patient-level leak check",
+          "Distribution comparison"
+        ]
+      }
+    ],
+    "knownBiases": [
+      {
+        "biasType": "Geographic representation",
+        "description": "Training data predominantly US/UK. Other populations unvalidated.",
+        "severity": "medium",
+        "affectedGroups": [
+          "Non-US/UK populations"
+        ],
+        "mitigation": "Usage restricted to UK. Post-market monitoring of demographics."
+      },
+      {
+        "biasType": "Age distribution",
+        "description": "Under-representation of paediatric patients.",
+        "severity": "high",
+        "affectedGroups": [
+          "Under 18"
+        ],
+        "mitigation": "Paediatric patients excluded from usage envelope."
+      },
+      {
+        "biasType": "Label quality variation",
+        "description": "NIH labels NLP-extracted (~10% error); OUH labels gold-standard.",
+        "severity": "low",
+        "affectedGroups": [
+          "All"
+        ],
+        "mitigation": "Final fine-tuning on gold-standard OUH labels only."
+      }
+    ],
+    "syntheticDataDeclaration": {
+      "containsSyntheticData": false,
+      "syntheticDataProportion": 0,
+      "generationMethodology": "N/A",
+      "validationAgainstRealData": false
+    }
+  },
+  "evaluation": {
+    "methodology": "Held-out OUH test set (n=12,750), patient-level separation. Independent evaluation by NICE Scientific Advice. 95% CIs via 10,000-iteration bootstrap.",
+    "primaryMetrics": [
+      {
+        "metricName": "auroc",
+        "value": 0.943,
+        "confidenceInterval": {
+          "lower": 0.938,
+          "upper": 0.948,
+          "level": 0.95
+        },
+        "evaluationDataset": "nhs-oxford-cxr-v2-test",
+        "sampleSize": 12750,
+        "notes": "Mean across 14 pathology classes."
+      },
+      {
+        "metricName": "sensitivity",
+        "value": 0.921,
+        "confidenceInterval": {
+          "lower": 0.912,
+          "upper": 0.93,
+          "level": 0.95
+        },
+        "evaluationDataset": "nhs-oxford-cxr-v2-test",
+        "sampleSize": 12750,
+        "notes": "At high-sensitivity operating point (triage)."
+      },
+      {
+        "metricName": "specificity",
+        "value": 0.847,
+        "confidenceInterval": {
+          "lower": 0.835,
+          "upper": 0.859,
+          "level": 0.95
+        },
+        "evaluationDataset": "nhs-oxford-cxr-v2-test",
+        "sampleSize": 12750
+      }
+    ],
+    "secondaryMetrics": [
+      {
+        "metricName": "ppv",
+        "value": 0.782,
+        "confidenceInterval": {
+          "lower": 0.764,
+          "upper": 0.8,
+          "level": 0.95
+        },
+        "evaluationDataset": "nhs-oxford-cxr-v2-test",
+        "sampleSize": 12750
+      },
+      {
+        "metricName": "npv",
+        "value": 0.956,
+        "confidenceInterval": {
+          "lower": 0.949,
+          "upper": 0.963,
+          "level": 0.95
+        },
+        "evaluationDataset": "nhs-oxford-cxr-v2-test",
+        "sampleSize": 12750,
+        "notes": "High NPV critical for triage safety."
+      }
+    ],
+    "benchmarks": [
+      {
+        "benchmarkName": "CheXpert Competition",
+        "benchmarkVersion": "1.0",
+        "benchmarkProvider": "Stanford ML Group",
+        "score": 0.931,
+        "maximumScore": 1.0,
+        "dateEvaluated": "2025-10-01",
+        "notes": "Mean AUROC on 5 competition pathologies."
+      }
+    ],
+    "demographicStratification": [
+      {
+        "stratificationAxis": "sex",
+        "strata": [
+          {
+            "stratumName": "Male",
+            "sampleSize": 6502,
+            "metrics": [
+              {
+                "metricName": "auroc",
+                "value": 0.941,
+                "confidenceInterval": {
+                  "lower": 0.933,
+                  "upper": 0.949,
+                  "level": 0.95
+                }
+              }
+            ]
+          },
+          {
+            "stratumName": "Female",
+            "sampleSize": 6248,
+            "metrics": [
+              {
+                "metricName": "auroc",
+                "value": 0.946,
+                "confidenceInterval": {
+                  "lower": 0.937,
+                  "upper": 0.955,
+                  "level": 0.95
+                }
+              }
+            ]
+          }
+        ],
+        "disparityAnalysis": "No significant difference (p=0.34, DeLong test)."
+      },
+      {
+        "stratificationAxis": "age-group",
+        "strata": [
+          {
+            "stratumName": "18-40",
+            "sampleSize": 1913,
+            "metrics": [
+              {
+                "metricName": "auroc",
+                "value": 0.957,
+                "confidenceInterval": {
+                  "lower": 0.944,
+                  "upper": 0.97,
+                  "level": 0.95
+                }
+              }
+            ]
+          },
+          {
+            "stratumName": "41-60",
+            "sampleSize": 3442,
+            "metrics": [
+              {
+                "metricName": "auroc",
+                "value": 0.948,
+                "confidenceInterval": {
+                  "lower": 0.939,
+                  "upper": 0.957,
+                  "level": 0.95
+                }
+              }
+            ]
+          },
+          {
+            "stratumName": "61-80",
+            "sampleSize": 4463,
+            "metrics": [
+              {
+                "metricName": "auroc",
+                "value": 0.938,
+                "confidenceInterval": {
+                  "lower": 0.929,
+                  "upper": 0.947,
+                  "level": 0.95
+                }
+              }
+            ]
+          },
+          {
+            "stratumName": "80+",
+            "sampleSize": 1913,
+            "metrics": [
+              {
+                "metricName": "auroc",
+                "value": 0.924,
+                "confidenceInterval": {
+                  "lower": 0.908,
+                  "upper": 0.94,
+                  "level": 0.95
+                }
+              }
+            ]
+          }
+        ],
+        "disparityAnalysis": "Modest age gradient; lower AUROC in 80+ group likely due to comorbidity complexity. Clinically acceptable across all strata."
+      },
+      {
+        "stratificationAxis": "ethnicity",
+        "strata": [
+          {
+            "stratumName": "White British",
+            "sampleSize": 9180,
+            "metrics": [
+              {
+                "metricName": "auroc",
+                "value": 0.944,
+                "confidenceInterval": {
+                  "lower": 0.938,
+                  "upper": 0.95,
+                  "level": 0.95
+                }
+              }
+            ]
+          },
+          {
+            "stratumName": "South Asian",
+            "sampleSize": 1020,
+            "metrics": [
+              {
+                "metricName": "auroc",
+                "value": 0.939,
+                "confidenceInterval": {
+                  "lower": 0.921,
+                  "upper": 0.957,
+                  "level": 0.95
+                }
+              }
+            ]
+          },
+          {
+            "stratumName": "Black African/Caribbean",
+            "sampleSize": 638,
+            "metrics": [
+              {
+                "metricName": "auroc",
+                "value": 0.935,
+                "confidenceInterval": {
+                  "lower": 0.912,
+                  "upper": 0.958,
+                  "level": 0.95
+                }
+              }
+            ]
+          },
+          {
+            "stratumName": "Other/Mixed/Not stated",
+            "sampleSize": 1913,
+            "metrics": [
+              {
+                "metricName": "auroc",
+                "value": 0.941,
+                "confidenceInterval": {
+                  "lower": 0.928,
+                  "upper": 0.954,
+                  "level": 0.95
+                }
+              }
+            ]
+          }
+        ],
+        "disparityAnalysis": "No significant disparity; CIs overlap for all pairs. Smaller minority samples yield wider CIs; post-market surveillance continues monitoring."
+      }
+    ],
+    "clinicalBaselineComparison": {
+      "baselineDescription": "Consultant radiologist performance on 500 randomly sampled OUH test cases (dual-read with adjudication).",
+      "comparisonResults": [
+        {
+          "metricName": "sensitivity",
+          "value": 0.921,
+          "notes": "System. Consultant: 0.947 (p=0.12, not significant)."
+        },
+        {
+          "metricName": "specificity",
+          "value": 0.847,
+          "notes": "System. Consultant: 0.891 (p=0.04, marginally higher)."
+        }
+      ]
+    },
+    "failureModes": [
+      {
+        "mode": "Subtle pneumothorax",
+        "description": "Small (<10% lung volume) pneumothoraces detected at 0.78 sensitivity.",
+        "frequency": "~3% of pneumothorax cases",
+        "clinicalImpact": "moderate",
+        "mitigation": "Radiologist review mandatory; triage only."
+      },
+      {
+        "mode": "Multi-pathology interactions",
+        "description": "Cases with 3+ pathologies show 5-8% per-class sensitivity drop.",
+        "frequency": "~12% of abnormal cases",
+        "clinicalImpact": "minor",
+        "mitigation": "Complex cases flagged for priority review."
+      },
+      {
+        "mode": "Non-standard positioning",
+        "description": "Degraded performance on AP portable/supine films.",
+        "frequency": "~20% of ED submissions",
+        "clinicalImpact": "minor",
+        "mitigation": "DICOM metadata detection + confidence penalty + clinician warning."
+      }
+    ],
+    "adversarialAssessment": {
+      "methodology": "PGD (L-inf, epsilon=0.01), FGSM, spatial transforms, DICOM metadata manipulation.",
+      "attackVectors": [
+        "PGD L-inf",
+        "FGSM",
+        "Spatial transforms",
+        "DICOM metadata manipulation"
+      ],
+      "robustnessScore": 0.89,
+      "findings": "Maintains >85% baseline under PGD at epsilon=0.01. Spatial transforms within 5°/2% negligible impact. DICOM manipulation no effect."
+    },
+    "confidenceCalibration": {
+      "methodology": "Platt scaling on OUH validation set. ECE with 15 bins.",
+      "expectedCalibrationError": 0.032,
+      "findings": "Well-calibrated post Platt scaling (pre: 0.087). Consistent across demographics."
+    },
+    "independentEvaluation": {
+      "evaluator": {
+        "legalName": "NICE Scientific Advice Programme",
+        "jurisdiction": "GB",
+        "website": "https://www.nice.org.uk"
+      },
+      "dateCompleted": "2026-01-15",
+      "reportReference": "NICE-SAP-2026-THORAX-001",
+      "findings": "Confirms claimed metrics within CIs. Methodology rigorous. Recommended for Tier 3 certification."
+    },
+    "limitations": [
+      "Not validated for paediatric patients (under 18)",
+      "Not validated for non-PA/AP views",
+      "Lower performance on portable/AP films vs standard PA erect",
+      "US/UK training populations only; other populations unvalidated",
+      "14 specified pathologies only; other conditions undetected",
+      "Subtle findings (<10% area) at lower sensitivity",
+      "Not a standalone diagnostic tool; requires radiologist review"
+    ]
+  },
+  "usageEnvelope": {
+    "intendedPurpose": {
+      "description": "Triage prioritisation of adult chest X-rays in secondary care radiology departments. Assigns priority scores enabling radiologists to review abnormal studies first. Decision support only; not autonomous diagnosis.",
+      "snomedCodes": [
+        "168731009",
+        "399208008"
+      ],
+      "clinicalSetting": [
+        "secondary-care"
+      ]
+    },
+    "approvedPopulations": {
+      "ageRange": {
+        "minimum": 18,
+        "maximum": 120
+      },
+      "inclusions": [
+        "Adult patients presenting for chest X-ray in secondary care"
+      ],
+      "exclusions": [
+        "Paediatric (<18)",
+        "Post-thoracic surgery within 48 hours"
+      ]
+    },
+    "excludedPopulations": [
+      "Under 18",
+      "Post-thoracic surgery within 48h",
+      "Non-DICOM-standard equipment"
+    ],
+    "inputSpecifications": {
+      "dataFormats": [
+        "DICOM"
+      ],
+      "qualityThresholds": [
+        {
+          "parameter": "Resolution",
+          "minimum": "1024x1024 pixels"
+        },
+        {
+          "parameter": "Bit depth",
+          "minimum": "12 bits"
+        },
+        {
+          "parameter": "View",
+          "minimum": "PA or AP erect (primary); AP portable (with confidence penalty)"
+        }
+      ],
+      "requiredMetadata": [
+        "Patient age",
+        "Patient sex",
+        "View position",
+        "Study date"
+      ],
+      "maximumInputSize": "50MB per DICOM instance"
+    },
+    "outputSpecifications": {
+      "format": "JSON: per-pathology probabilities (0-1), triage priority (critical/urgent/routine), attention map overlay",
+      "confidenceThresholds": [
+        {
+          "action": "Critical priority",
+          "minimumConfidence": 0.85,
+          "belowThresholdBehaviour": "Classify as urgent or routine"
+        },
+        {
+          "action": "Urgent priority",
+          "minimumConfidence": 0.5,
+          "belowThresholdBehaviour": "Classify as routine"
+        },
+        {
+          "action": "Routine",
+          "minimumConfidence": 0.0,
+          "belowThresholdBehaviour": "N/A"
+        }
+      ],
+      "outputClasses": [
+        "atelectasis",
+        "cardiomegaly",
+        "consolidation",
+        "oedema",
+        "effusion",
+        "emphysema",
+        "fibrosis",
+        "hernia",
+        "infiltration",
+        "mass",
+        "nodule",
+        "pleural-thickening",
+        "pneumonia",
+        "pneumothorax"
+      ],
+      "uncertaintyRepresentation": "Calibrated posterior probabilities via Platt scaling"
+    },
+    "humanInTheLoop": {
+      "required": true,
+      "role": "Consultant radiologist or ST4+ registrar",
+      "minimumQualifications": "FRCR or equivalent; GMC registered",
+      "requiredActions": [
+        "Review all critical/urgent cases before clinical action",
+        "Confirm or override triage classification",
+        "Issue formal report independent of system output",
+        "Report suspected errors via incident mechanism"
+      ],
+      "maximumCaseloadPerReviewer": 200,
+      "timeConstraints": "Critical: within 1 hour. Urgent: within 4 hours."
+    },
+    "excludedUses": [
+      "Autonomous diagnosis without radiologist review",
+      "Screening of asymptomatic populations",
+      "Paediatric chest X-ray interpretation",
+      "CT, MRI, or ultrasound interpretation",
+      "Primary care / community diagnostic centres (unvalidated)",
+      "Medico-legal or expert witness use",
+      "Research without separate ethics approval"
+    ],
+    "maximumDeploymentScale": {
+      "maxConcurrentSites": 50,
+      "maxDailyInferences": 100000,
+      "geographicRestrictions": [
+        "GB"
+      ]
+    }
+  },
+  "runtime": {
+    "infrastructureRequirements": {
+      "minimumCompute": "NVIDIA T4 GPU (16GB VRAM minimum)",
+      "minimumMemory": "32GB system RAM",
+      "maximumLatency": {
+        "p50ms": 250,
+        "p95ms": 500,
+        "p99ms": 1000
+      },
+      "availabilityRequirement": "99.9% during operational hours (07:00-22:00); 99.0% off-hours",
+      "dataResidency": [
+        "GB"
+      ]
+    },
+    "softwareDependencies": [
+      {
+        "name": "PyTorch",
+        "version": "2.4.0",
+        "versionConstraint": ">=2.2.0 <3.0.0"
+      },
+      {
+        "name": "CUDA",
+        "version": "12.1",
+        "versionConstraint": ">=12.0 <13.0"
+      },
+      {
+        "name": "pydicom",
+        "version": "2.4.0",
+        "versionConstraint": ">=2.3.0 <3.0.0"
+      },
+      {
+        "name": "ThoraxTriage Runtime",
+        "version": "3.2.1",
+        "versionConstraint": "=3.2.1"
+      }
+    ],
+    "guardrails": [
+      {
+        "type": "input-validation",
+        "description": "DICOM format verification, modality check (CR/DX only), resolution validation, bit depth check, view position detection",
+        "mandatory": true
+      },
+      {
+        "type": "confidence-gate",
+        "description": "Outputs below 0.15 for all pathologies and above 0.85 for any pathology trigger additional logging and attention map generation",
+        "mandatory": true
+      },
+      {
+        "type": "clinical-boundary",
+        "description": "System rejects inputs outside approved usage envelope (paediatric age, non-chest modality) with explanatory message",
+        "mandatory": true
+      },
+      {
+        "type": "rate-limit",
+        "description": "Maximum 500 inferences per minute per deployment instance to prevent quality degradation under load",
+        "mandatory": true
+      }
+    ],
+    "logging": {
+      "requiredFields": [
+        "inference_id",
+        "timestamp",
+        "patient_pseudonym",
+        "input_hash",
+        "output_probabilities",
+        "triage_classification",
+        "model_version",
+        "weight_hash",
+        "processing_time_ms",
+        "input_quality_metrics",
+        "guardrail_triggers"
+      ],
+      "retentionPeriod": "8 years (aligned with NHS records retention schedule)",
+      "accessControls": "Role-based access; audit log for all access events; encrypted at rest (AES-256)",
+      "auditTrail": true
+    },
+    "driftDetection": {
+      "methodology": "Population Stability Index (PSI) on input pixel intensity distributions and output probability distributions. Monitoring window: rolling 7-day and 30-day.",
+      "monitoredDistributions": [
+        "input pixel intensity histogram",
+        "output probability distribution per class",
+        "triage classification distribution",
+        "demographic distribution of processed cases"
+      ],
+      "thresholds": [
+        {
+          "metric": "psi_input_intensity",
+          "warningThreshold": 0.1,
+          "criticalThreshold": 0.2,
+          "windowSize": "7 days"
+        },
+        {
+          "metric": "psi_output_distribution",
+          "warningThreshold": 0.1,
+          "criticalThreshold": 0.25,
+          "windowSize": "7 days"
+        },
+        {
+          "metric": "mean_confidence_shift",
+          "warningThreshold": 0.05,
+          "criticalThreshold": 0.1,
+          "windowSize": "30 days"
+        },
+        {
+          "metric": "critical_flag_rate_change",
+          "warningThreshold": 0.15,
+          "criticalThreshold": 0.3,
+          "windowSize": "30 days"
+        }
+      ],
+      "responseProtocol": "Warning: alert to clinical safety officer within 24h. Critical: automatic suspension of triage prioritisation (system reverts to FIFO); alert to Certificate Holder and MHRA within 48h."
+    },
+    "invalidationTriggers": [
+      {
+        "trigger": "Weight hash mismatch detected during runtime verification",
+        "action": "shutdown",
+        "remediationWindow": "Immediate"
+      },
+      {
+        "trigger": "Critical drift threshold breached for >48 hours",
+        "action": "suspend",
+        "remediationWindow": "72 hours"
+      },
+      {
+        "trigger": "Adverse patient outcome attributed to system output",
+        "action": "suspend",
+        "remediationWindow": "Pending investigation"
+      },
+      {
+        "trigger": "Data sharing agreement expiry for NHS training dataset",
+        "action": "alert",
+        "remediationWindow": "90 days"
+      },
+      {
+        "trigger": "Software dependency reaches end-of-life",
+        "action": "alert",
+        "remediationWindow": "180 days"
+      }
+    ],
+    "incidentReporting": {
+      "reportingAuthority": "MHRA",
+      "reportingTimeline": "Serious incidents: within 48 hours. Non-serious: within 15 days.",
+      "reportingCriteria": [
+        "Patient harm attributable to system output",
+        "System failure resulting in delayed diagnosis",
+        "Systematic misclassification detected",
+        "Unauthorised access to system or logs"
+      ],
+      "contactDetails": "MHRA Yellow Card: https://yellowcard.mhra.gov.uk"
+    }
+  },
+  "approvedChangeEnvelope": {
+    "permittedChanges": [
+      {
+        "changeType": "retraining",
+        "description": "Retraining on additional chest X-ray data from NHS data controllers with valid DSAs, using same 14-class taxonomy and processing pipeline.",
+        "bounds": {
+          "dataSourceRestriction": "NHS data controllers with active DSAs only",
+          "maximumNewDataProportion": 0.3,
+          "taxonomyChange": false,
+          "architectureChange": false
+        },
+        "validationRequired": {
+          "tests": [
+            "Full evaluation on OUH held-out test set",
+            "Demographic stratification analysis",
+            "Regression testing against previous version"
+          ],
+          "minimumPerformance": [
+            {
+              "metricName": "auroc",
+              "value": 0.935,
+              "notes": "Must not drop below 0.935 mean AUROC"
+            },
+            {
+              "metricName": "sensitivity",
+              "value": 0.91,
+              "notes": "At standard operating point"
+            }
+          ],
+          "regressionThreshold": 0.02
+        },
+        "filingRequirements": {
+          "filingDeadlineDays": 30,
+          "documentationRequired": [
+            "Updated training data attestation",
+            "Comparative evaluation report",
+            "New weight hash"
+          ]
+        }
+      },
+      {
+        "changeType": "rag-corpus-update",
+        "description": "Update to clinical reference corpus used for output explanations (does not affect model weights or triage classification).",
+        "bounds": {
+          "sourceRestriction": "Peer-reviewed literature and NICE guidelines only",
+          "contentScope": "Radiology and pulmonary medicine"
+        },
+        "validationRequired": {
+          "tests": [
+            "Explanation quality review by clinical team"
+          ],
+          "minimumPerformance": [],
+          "regressionThreshold": 0
+        },
+        "filingRequirements": {
+          "filingDeadlineDays": 60,
+          "documentationRequired": [
+            "Corpus change log"
+          ]
+        }
+      },
+      {
+        "changeType": "dependency-update",
+        "description": "Update PyTorch, CUDA, or other runtime dependencies within specified version ranges.",
+        "bounds": {
+          "versionConstraints": "Within ranges specified in softwareDependencies"
+        },
+        "validationRequired": {
+          "tests": [
+            "Numerical equivalence testing (max 1e-6 output difference on reference dataset)",
+            "Latency regression testing"
+          ],
+          "minimumPerformance": [],
+          "regressionThreshold": 0
+        },
+        "filingRequirements": {
+          "filingDeadlineDays": 60,
+          "documentationRequired": [
+            "Dependency change log",
+            "Numerical equivalence report"
+          ]
+        }
+      }
+    ],
+    "globalConstraints": {
+      "maxCumulativeChangesBeforeReview": 5,
+      "maxTimeBetweenFullRevalidation": "6 months",
+      "performanceFloor": [
+        {
+          "metricName": "auroc",
+          "value": 0.92,
+          "notes": "Absolute floor; breach requires immediate recertification"
+        },
+        {
+          "metricName": "sensitivity",
+          "value": 0.89,
+          "notes": "Absolute floor at standard operating point"
+        }
+      ]
+    }
+  },
+  "signature": {
+    "algorithm": "ES256",
+    "keyId": "ukaimdc-signing-key-2026-001",
+    "certificateChain": [
+      "MIIBxTCCAWugAwIBAgIUE8V...base64-encoded-cert...",
+      "MIICZjCCAeygAwIBAgIUQ4R...base64-encoded-root-ca..."
+    ],
+    "signatureValue": "MEUCIQC7...base64url-encoded-jws-signature...",
+    "signedAt": "2026-03-01T09:00:00Z"
+  }
+}

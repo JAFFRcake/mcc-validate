@@ -1,0 +1,85 @@
+{
+  "@context": "https://mcc-standard.org/v1",
+  "@type": "ModelContextCertificate",
+  "certificateId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "version": "1.0.0",
+  "issued": "2026-01-01",
+  "expires": "2028-12-31",
+  "riskTier": 1,
+  "status": "active",
+  "identity": {
+    "certificateAuthority": {
+      "legalName": "Test CA Ltd",
+      "jurisdiction": "GB"
+    },
+    "certificateHolder": {
+      "legalName": "Test Holder Ltd",
+      "jurisdiction": "GB"
+    },
+    "modelName": "TestModel-Tier1",
+    "modelVersion": "1.0.0",
+    "weightHash": {
+      "algorithm": "SHA-256",
+      "value": "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+      "serialisationMethod": "safetensors-canonical"
+    }
+  },
+  "architecture": {
+    "modelType": "convolutional",
+    "parameterCount": 1000000,
+    "inputModalities": ["image"],
+    "outputModalities": ["classification"]
+  },
+  "trainingData": {
+    "containsPatientData": false,
+    "dataCategories": ["web-text"],
+    "licensingCompliance": {
+      "allDatasetsLicensed": true,
+      "complianceStatement": "All datasets are openly licensed."
+    }
+  },
+  "evaluation": {
+    "methodology": "Held-out test set evaluation.",
+    "primaryMetrics": [
+      {
+        "metricName": "accuracy",
+        "value": 0.92
+      }
+    ],
+    "limitations": ["Limited to English text only."]
+  },
+  "usageEnvelope": {
+    "intendedPurpose": {
+      "description": "Low-risk wellness classification."
+    },
+    "approvedPopulations": {
+      "ageRange": {"minimum": 18, "maximum": 120}
+    },
+    "excludedPopulations": ["Under 18"],
+    "inputSpecifications": {
+      "dataFormats": ["JPEG"]
+    },
+    "outputSpecifications": {
+      "format": "JSON classification"
+    },
+    "humanInTheLoop": {
+      "required": false
+    },
+    "excludedUses": ["Diagnostic use", "Clinical decision-making"]
+  },
+  "runtime": {
+    "infrastructureRequirements": {
+      "minimumCompute": "2 vCPU"
+    },
+    "logging": {
+      "requiredFields": ["inference_id", "timestamp"],
+      "retentionPeriod": "3 years"
+    }
+  },
+  "signature": {
+    "algorithm": "ES256",
+    "keyId": "test-key-001",
+    "signatureValue": "MEUCIQC7fakesignaturevalue",
+    "signedAt": "2026-01-01T00:00:00Z"
+  }
+}
